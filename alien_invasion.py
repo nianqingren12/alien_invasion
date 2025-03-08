@@ -83,9 +83,26 @@ class AlienInvasion:
            
     def _create_fleet(self):
         '''创建一个外形舰队'''
-        #创建一个外星人
+        #创建一个外星人，再不断添加，直到没有空间添加外星人为止
+        #外星人的间距为外星人的宽度和外星人的高度
         alien = Alien(self)
-        self.aliens.add(alien)
+        alien_width, alien_hight = alien.rect.size
+        current_x, current_y = alien_width, alien_hight
+        while current_y < (self.settings.screen_height - 3*alien_hight):
+            while current_x < (self.settings.screen_width - 2*alien_width):
+                self._creat_alien(current_x,current_y)
+                current_x += 2*alien_width
+            #添加一行外星人后，重置x并递进y
+            current_x = alien_width
+            current_y += 2*alien_hight
+
+    def _creat_alien(self,x_position,y_position):
+        '''创建一个外星人并将其加入外星舰队'''
+        new_alien = Alien(self)
+        new_alien.x = x_position
+        new_alien.rect.x = x_position
+        new_alien.rect.y = y_position
+        self.aliens.add(new_alien)
 
 if __name__ == '__main__':
     '''创建游戏实例并运行游戏'''
