@@ -1,9 +1,12 @@
 import sys
+from time import sleep
 import pygame
 from setting import Settings
+from game_stats import GameStats
 from ship import Ship
 from bullet import Bullet
 from alien import Alien
+
 
 class AlienInvasion:
     '''管理游戏资源和行为的类'''
@@ -14,6 +17,8 @@ class AlienInvasion:
         self.settings = Settings() # 关于屏幕的一些设置
         self.screen = pygame.display.set_mode((self.settings.screen_width,self.settings.screen_height))
         pygame.display.set_caption('Alien Invasion')
+        #创建一个用于存储游戏统计信息的实例
+        self.stats = GameStats(self)
         self.ship = Ship(self) # 飞船实例，self是给ai_game的参数
         self.bullets = pygame.sprite.Group()#存储创建子弹的编组
         self.aliens = pygame.sprite.Group()
@@ -26,6 +31,7 @@ class AlienInvasion:
             self.ship.update() 
             self.bullets.update()
             self._update_bullets()
+            self._update_aliens()
             self._update_screen()
             self.clock.tick(60) 
               
@@ -80,7 +86,17 @@ class AlienInvasion:
         for bullet in self.bullets.copy():
             if bullet.rect.bottom <= 0:
                 self.bullets.remove(bullet)
-           
+        self._check_bullet_alien_collisions()
+
+    def _check_bullet_alien_collisions(self):
+        '''响应子弹和外星人的碰撞'''
+        #删除发生碰撞的子弹和外星人
+        collisions = pygame.sprite.groupcollide(self.bullets,self.aliens,True,True)
+        if not self.aliens:
+            #删除现有的子弹并新建一群外星人
+            self.bullets.empty()
+            self._create_fleet()   
+
     def _create_fleet(self):
         '''创建一个外形舰队'''
         #创建一个外星人，再不断添加，直到没有空间添加外星人为止
@@ -90,19 +106,53 @@ class AlienInvasion:
         current_x, current_y = alien_width, alien_hight
         while current_y < (self.settings.screen_height - 3*alien_hight):
             while current_x < (self.settings.screen_width - 2*alien_width):
-                self._creat_alien(current_x,current_y)
+                self._create_alien(current_x,current_y)
                 current_x += 2*alien_width
             #添加一行外星人后，重置x并递进y
             current_x = alien_width
             current_y += 2*alien_hight
 
-    def _creat_alien(self,x_position,y_position):
+    def _create_alien(self,x_position,y_position):
         '''创建一个外星人并将其加入外星舰队'''
         new_alien = Alien(self)
         new_alien.x = x_position
         new_alien.rect.x = x_position
         new_alien.rect.y = y_position
         self.aliens.add(new_alien)
+
+    def _update_aliens(self):
+        '''检查是否有外星人位于屏幕边缘，更新外星人舰队中所有外星人的位置'''
+        self.aliens.update()
+        self._check_fleet_edges()
+        #检查外星人和飞船之间的碰撞
+        if pygame.sprite.spritecollideany(self.ship,self.aliens):
+            self._ship_hit()
+
+    def _check_fleet_edges(self):
+        '''有外星人到达边缘时采取相应的措施'''
+        for alien in self.aliens.sprites():
+            if alien.check_edges():
+                self._change_fleet_direction()
+                break
+
+    def _change_fleet_direction(self):
+        '''将整群外星人下移，并改变它们的方向'''
+        for alien in self.aliens.sprites():
+            alien.rect.y += self.settings.fleet_drop_speed
+        self.settings.fleet_direction *= -1
+
+    def _ship_hit(self):
+        '''响应飞船被外星人碰撞'''
+        # 将ship_left减1
+        self.stats.ships_left -= 1
+        # 清空外星人和子弹
+        self.aliens.empty()
+        self.bullets.empty()
+        # 创建一群新的外星人，并将飞船放到屏幕底端中央
+        self._create_fleet()
+        self.ship.center_ship()
+        # 暂停
+        sleep(0.5)
 
 if __name__ == '__main__':
     '''创建游戏实例并运行游戏'''
