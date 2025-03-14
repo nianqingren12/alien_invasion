@@ -11,7 +11,7 @@ class Bullet(Sprite):
         self.color = self.settings.bullet_color
 
         #在(0,0)处创建一个表示子弹的矩形，再设置正确的位置
-        self.rect = pygame.Rect(0,0,self.settings.bullet_width,self.settings.bullet_hight)
+        self.rect = pygame.Rect(0,0,self.settings.bullet_width,self.settings.bullet_height)
         self.rect.midtop = ai_game.ship.rect.midtop
         #存储用浮点数表示的子弹位置
         self.y = float(self.rect.y)

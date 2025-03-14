@@ -1,8 +1,10 @@
 import pygame
-class Ship:
+from pygame.sprite import Sprite
+class Ship(Sprite):
     '''管理飞船的类'''
     def __init__(self,ai_game): #ai_game是AlienInvasion的实例
         '''初始化飞船并设置其初始位置'''
+        super().__init__()
         self.screen = ai_game.screen
         self.settings = ai_game.settings
         self.screen_rect = ai_game.screen.get_rect()
